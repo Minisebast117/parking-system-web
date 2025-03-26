@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parking System - Plazas Disponibles</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: #333;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    .spots {
+      font-size: 4em;
+      font-weight: bold;
+      color: #3498db;
+      margin: 20px 0;
+      transition: color 0.3s ease;
+    }
+    .spots.low {
+      color: #e74c3c; /* Rojo si hay pocas plazas */
+    }
+    .status {
+      font-size: 1.2em;
+      color: #7f8c8d;
+    }
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Estacionamientos UNAPEC</h1>
+    <div class="loader" id="loader"></div>
+    <div class="spots" id="availableSpots">...</div>
+    <div class="status" id="statusMessage">Cargando...</div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <script>
+    // Configuración de Firebase (usando los valores que proporcionaste)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYuWC7w3CFgJPlu3KEJV5NqC5k7uKeahs",
+      authDomain: "parkingsystem-97ac1.firebaseapp.com",
+      databaseURL: "https://parkingsystem-97ac1-default-rtdb.firebaseio.com",
+      projectId: "parkingsystem-97ac1",
+      storageBucket: "parkingsystem-97ac1.firebasestorage.app",
+      messagingSenderId: "654198273628",
+      appId: "1:654198273628:web:fa70f4f1d16805f6d0d899",
+      measurementId: "G-Y9V34SQ54N"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Referencia a la base de datos
+    const database = firebase.database();
+    const spotsRef = database.ref('/parking/availableSpots');
+
+    // Elementos del DOM
+    const spotsElement = document.getElementById('availableSpots');
+    const statusElement = document.getElementById('statusMessage');
+    const loader = document.getElementById('loader');
+
+    // Escuchar cambios en tiempo real
+    spotsRef.on('value', (snapshot) => {
+      loader.style.display = 'none'; // Ocultar el loader
+      const spots = snapshot.val();
+
+      if (spots !== null) {
+        spotsElement.textContent = spots;
+        // Cambiar color si hay pocas plazas
+        spotsElement.classList.toggle('low', spots <= 1);
+        // Actualizar mensaje de estado
+        if (spots === 0) {
+          statusElement.textContent = '¡No hay plazas disponibles!';
+        } else if (spots <= 1) {
+          statusElement.textContent = '¡Queda poco espacio!';
+        } else {
+          statusElement.textContent = 'Plazas disponibles';
+        }
+      } else {
+        spotsElement.textContent = 'Error';
+        statusElement.textContent = 'No se pudieron cargar los datos';
+      }
+    }, (error) => {
+      loader.style.display = 'none';
+      spotsElement.textContent = 'Error';
+      statusElement.textContent = 'Error al conectar con la base de datos';
+      console.error(error);
+    });
+  </script>
+</body>
+</html>
